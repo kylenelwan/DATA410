@@ -1,0 +1,80 @@
+---
+title: "DATA 410 Quadratic Registered atemp"
+author: "Kyle Nelwan"
+date: "04/04/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MPV)
+library(MASS)
+library(bestglm)
+library(glmnet)
+library(regclass)
+```
+
+```{r initialize}
+df <- read.csv("hour.csv")
+df<- subset(df, select = -c(instant,cnt,dteday))
+
+```
+
+```{r model 1 casual initial assessment}
+model <- lm(registered ~. - casual, data = df)
+summary(model)
+plot(model)
+```
+The summary of this model shows us that most of our variables are significant enough (5% significance level). However, this  model has a low adjusted R-squared value at 0.335. Hence, this model is great at explaining the data we have.
+on further inspection, our data may have a quadratic or a decaying relationship. This is shown in the residuals vs fitted plot.  
+The Normal Q-Q plot shows that our data set have a light left tail and a heavy right tail. Hence, we can conclude that our data set is rightly skewed. Note that a lot of our data are beyond the 2 standardized residuals range. Therefore, we have a problem with our current linear model. 
+Similar with the previous model, this model does not have any influence points but have high residuals value.
+
+
+```{r model 1 casual VIF}
+VIF(model)
+```
+We can see that there exist a high VIF value between temp and atemp. This make sense since both variable indicates the value of the hourly temperature. Therefore, we need to remove one of those variables.
+Also, there seems to be a relatively high VIF value between season and month. This make sense since certain months always have the same season. Hence, we remove season from the model as the mnth variable give us more insight into the data as there is more available inputs. 
+
+```{r model 2 atemp casual boxcox}
+x <- subset(df, select = - c(season,atemp))
+x$casual <- x$casual+1
+x$registered <- x$registered+1
+x$mnth2 <- x$mnth^2
+x$hr2 <- x$hr^2
+x$weekday2 <- x$weekday^2
+x$weathersit2 <- x$weathersit^2
+x$temp2 <- x$temp^2
+x$hum2 <- x$hum^2
+x$windspeed2 <- x$windspeed^2
+
+bc<-boxcox(registered ~. - casual,data = x )
+lambda <- bc$x[which.max(bc$y)]
+model <- lm(((registered^lambda-1)/lambda) ~ . - casual, data = x)
+
+summary(model)
+plot(model)
+```
+
+```{r model 3 casual atemp LASSO}
+x$registered <-(x$registered^lambda-1)/lambda
+y <- x$registered
+X <- subset(x, select = - c(casual,registered))
+X <- as.matrix(X)
+
+cross.validation <- cv.glmnet(X, y, alpha = 1,type.measure = "mse") 
+
+optimal.lambda <- cross.validation$lambda.min
+
+
+lm.lasso.optimal <-glmnet(X, y, 
+                   lambda = optimal.lambda,
+                   alpha = 1, #alpha=1 is the LASSO penalty
+                   family = 'gaussian')
+
+coef(lm.lasso.optimal)
+
+summary(lm(y~X))
+plot(lm(y~X))
+```
