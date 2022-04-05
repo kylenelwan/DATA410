@@ -14,11 +14,15 @@ library(glmnet)
 library(regclass)
 ```
 
+## DATASET SETUP
+
 ```{r initialize}
 df <- read.csv("hour.csv")
 df<- subset(df, select = -c(instant,cnt,dteday))
 
 ```
+
+## INITIAL DATASET ASSESSMENT
 
 ```{r model 1 casual initial assessment}
 model <- lm(casual ~. - registered, data = df)
@@ -31,12 +35,15 @@ The residuals vs fitted diagnostic plot has a clear pattern. Our data set seems 
 The Normal Q-Q plot shows that our model is highly right skewed. This is a huge problem for us. Notice that those rightly skewed data have a very large value of standardized residuals. Hence, the this original linear model is flawed.
 The residuals vs leverage plot tells us that none of our data are influential points but have high residuals as stated before.
 
+## MULTICOLLINEARITY ASSESSMENT
 
 ```{r model 1 casual VIF}
 VIF(model)
 ```
 We can see that there exist a high VIF value between temp and atemp. This make sense since both variable indicates the value of the hourly temperature. Therefore, we need to remove one of those variables.
 Also, there seems to be a relatively high VIF value between season and month. This make sense since certain months always have the same season. Hence, we remove season from the model as the mnth variable give us more insight into the data as there is more available inputs. 
+
+## BOX-COX TRANSFORMATION
 
 ```{r model 2 atemp casual boxcox}
 x <- subset(df, select = - c(season,atemp))
@@ -50,6 +57,12 @@ model <- lm(((casual^lambda-1)/lambda) ~ . - registered, data = x)
 summary(model)
 plot(model)
 ```
+
+After the Box-Cox transformation, the optimal lambda is 0.101. Even though visually from the graph the lambda = 0 value seems to be within the 95% CI, it is uncertain if the 0 value is actually in the interval. Therefore, the actual lambda of 0.101 will be used without approximation, consequently, the dependent variable will be (y^lambda - 1)/lambda (instead of log(y) if the lambda = 0).
+
+After applying the transformation to the initial dataset model, it can also be seen that the adjusted R-squared, and the diagnostics seem to be improving, proving that the Box-Cox transformed model is a better fit to the data.
+
+## VARIABLE SELECTION
 
 ```{r model 3 casual atemp LASSO}
 x$casual <-(x$casual^lambda-1)/lambda

@@ -14,11 +14,15 @@ library(glmnet)
 library(regclass)
 ```
 
+## DATASET SETUP
+
 ```{r initialize}
 df <- read.csv("hour.csv")
 df<- subset(df, select = -c(instant,cnt,dteday))
 
 ```
+
+## INITIAL DATASET ASSESSMENT
 
 ```{r model 1 casual initial assessment}
 model <- lm(registered ~. - casual, data = df)
@@ -30,12 +34,15 @@ on further inspection, our data may have a quadratic or a decaying relationship.
 The Normal Q-Q plot shows that our data set have a light left tail and a heavy right tail. Hence, we can conclude that our data set is rightly skewed. Note that a lot of our data are beyond the 2 standardized residuals range. Therefore, we have a problem with our current linear model. 
 Similar with the previous model, this model does not have any influence points but have high residuals value.
 
+## MULTICOLLINEARITY ASSESSMENT
 
 ```{r model 1 casual VIF}
 VIF(model)
 ```
 We can see that there exist a high VIF value between temp and atemp. This make sense since both variable indicates the value of the hourly temperature. Therefore, we need to remove one of those variables.
 Also, there seems to be a relatively high VIF value between season and month. This make sense since certain months always have the same season. Hence, we remove season from the model as the mnth variable give us more insight into the data as there is more available inputs. 
+
+## QUADRATIC SETUP AND BOX-COX TRANSFORMATION
 
 ```{r model 2 atemp casual boxcox}
 x <- subset(df, select = - c(season,atemp))
@@ -56,6 +63,14 @@ model <- lm(((registered^lambda-1)/lambda) ~ . - casual, data = x)
 summary(model)
 plot(model)
 ```
+
+The quadratic setup is done by squaring all the explanatory variables, and see if the eventual transformed fit is better than the linear/un-squared explanatory variables transformed fit.
+
+After the Box-Cox transformation, the optimal lambda is 0.222. Visually, from the graph, the lambda = 0 value seems to be not within the 95% CI. Therefore, the actual optimum lamda will be used without approximation, consequently, the dependent variable will be (y^lambda - 1)/lambda (instead of log(y) if the lambda = 0).
+
+After applying the transformation to the initial dataset model, it can also be seen that the adjusted R-squared, and the diagnostics seem to be improving, proving that the Box-Cox transformed model is a better fit to the data.
+
+## VARIABLE SELECTION
 
 ```{r model 3 casual atemp LASSO}
 x$registered <-(x$registered^lambda-1)/lambda
