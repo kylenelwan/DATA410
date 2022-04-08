@@ -19,7 +19,6 @@ library(regclass)
 ```{r initialize}
 df <- read.csv("hour.csv")
 df<- subset(df, select = -c(instant,cnt,dteday))
-
 ```
 
 ## INITIAL DATASET ASSESSMENT
@@ -49,11 +48,9 @@ Also, there seems to be a relatively high VIF value between season and month. Th
 x <- subset(df, select = - c(season,atemp))
 x$casual <- x$casual+1
 x$registered <- x$registered+1
-
 bc<-boxcox(casual ~. - registered,data = x )
 lambda <- bc$x[which.max(bc$y)]
 model <- lm(((casual^lambda-1)/lambda) ~ . - registered, data = x)
-
 summary(model)
 plot(model)
 ```
@@ -69,21 +66,18 @@ x$casual <-(x$casual^lambda-1)/lambda
 y <- x$casual
 X <- subset(x, select = - c(casual,registered))
 X <- as.matrix(X)
-
 cross.validation <- cv.glmnet(X, y, alpha = 1,type.measure = "mse") 
-
 optimal.lambda <- cross.validation$lambda.min
-
-
 lm.lasso.optimal <-glmnet(X, y, 
                    lambda = optimal.lambda,
                    alpha = 1, #alpha=1 is the LASSO penalty
                    family = 'gaussian')
-
 coef(lm.lasso.optimal)
-
 X<- subset(X,select = - c(weathersit,windspeed))
-
 summary(lm(y~X))
 plot(lm(y~X))
 ```
+
+```{r PRESS}
+PRESS(lm(y~X))
+````
