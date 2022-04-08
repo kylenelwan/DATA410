@@ -89,7 +89,12 @@ lm.lasso.optimal <-glmnet(X, y,
                    family = 'gaussian')
 
 coef(lm.lasso.optimal)
-
+X <- subset(x, select = - c(casual,registered,weekday2,weekday))
+X <- as.matrix(X)
 summary(lm(y~X))
 plot(lm(y~X))
+```
+
+```{r PRESS}
+PRESS(lm(y~X))
 ```

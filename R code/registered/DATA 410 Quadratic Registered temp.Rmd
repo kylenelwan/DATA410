@@ -93,3 +93,6 @@ coef(lm.lasso.optimal)
 summary(lm(y~X))
 plot(lm(y~X))
 ```
+```{r PRESS}
+PRESS(lm(y~X))
+```
