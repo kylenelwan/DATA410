@@ -196,6 +196,9 @@ plot(model.qrt)
 ### Linear, Casual, atemp
 
 ```{r}
+x.la <- subset(df, select = - c(season,temp))
+x.la$casual <- x.la$casual+1
+x.la$registered <- x.la$registered+1
 x.la$casual <-(x.la$casual^lambda.lca-1)/lambda.lca
 y.la <- x.la$casual
 X.la <- subset(x.la, select = - c(casual,registered))
@@ -228,6 +231,9 @@ Backwards Selection: All except 'weathersit'
 ### Linear, Casual, temp
 
 ```{r}
+x.lt <- subset(df, select = - c(season,atemp))
+x.lt$casual <- x.lt$casual+1
+x.lt$registered <- x.lt$registered+1
 x.lt$casual <-(x.lt$casual^lambda.lct-1)/lambda.lct
 y.lt <- x.lt$casual
 X.lt <- subset(x.lt, select = - c(casual,registered))
@@ -319,8 +325,11 @@ Backwards Selection: All variables are significant
 ### Linear, Registered, atemp
 
 ```{r}
-x.la$casual <-(x.la$casual^lambda.lra-1)/lambda.lra
-y.la <- x.la$casual
+x.la <- subset(df, select = - c(season,temp))
+x.la$casual <- x.la$casual+1
+x.la$registered <- x.la$registered+1
+x.la$registered <-(x.la$registered^lambda.lra-1)/lambda.lra
+y.la <- x.la$registered
 X.la <- subset(x.la, select = - c(casual,registered))
 X.la <- as.matrix(X.la)
 
@@ -337,21 +346,27 @@ lm.lasso.optimal.lra <-glmnet(X.la, y.la,
 
 coef(lm.lasso.optimal.lra)
 
+## Backwards Selection
+X.la<- subset(X.la,select = - weathersit)
 summary(lm(y.la~X.la))
 plot(lm(y.la~X.la))
 
-## No Backwards Selection: All variables are significant to begin with
+## PRESS
+PRESS(lm(y.la~X.la))
 ```
 
 LASSO: All variables are significant
 
-Backwards Selection: All variables are significant
+Backwards Selection: All except 'weathersit'
 
 ### Linear, Registered, temp
 
 ```{r}
-x.lt$casual <-(x.lt$casual^lambda.lrt-1)/lambda.lrt
-y.lt <- x.lt$casual
+x.lt <- subset(df, select = - c(season,atemp))
+x.lt$casual <- x.lt$casual+1
+x.lt$registered <- x.lt$registered+1
+x.lt$registered <-(x.lt$registered^lambda.lrt-1)/lambda.lrt
+y.lt <- x.lt$registered
 X.lt <- subset(x.lt, select = - c(casual,registered))
 X.lt <- as.matrix(X.lt)
 
@@ -368,19 +383,32 @@ lm.lasso.optimal.lrt <-glmnet(X.lt, y.lt,
 
 coef(lm.lasso.optimal.lrt)
 
+## Backwards Selection
+X.lt<- subset(X.lt,select = - c(weathersit,windspeed))
 summary(lm(y.lt~X.lt))
 plot(lm(y.lt~X.lt))
 
-## No Backwards Selection: All variables are significant to begin with
+## PRESS
+PRESS(lm(y.lt~X.lt))
 ```
 
 LASSO: All variables are significant
 
-Backwards Selection: All variables are significant
+Backwards Selection: All except 'weathersit' and 'windspeed'
 
 ### Quadratic, Registered, atemp
 
 ```{r}
+x.qa <- subset(df, select = - c(season,temp))
+x.qa$casual <- x.qa$casual+1
+x.qa$registered <- x.qa$registered+1
+x.qa$mnth2 <- x.qa$mnth^2
+x.qa$hr2 <- x.qa$hr^2
+x.qa$weekday2 <- x.qa$weekday^2
+x.qa$weathersit2 <- x.qa$weathersit^2
+x.qa$atemp2 <- x.qa$atemp^2
+x.qa$hum2 <- x.qa$hum^2
+x.qa$windspeed2 <- x.qa$windspeed^2
 x.qa$registered <-(x.qa$registered^lambda.qra-1)/lambda.qra
 y.qa <- x.qa$registered
 X.qa <- subset(x.qa, select = - c(casual,registered))
@@ -415,6 +443,16 @@ Backwards Selection: All except 'weekday'
 ### Quadratic, Registered, temp
 
 ```{r}
+x.qt <- subset(df, select = - c(season,atemp))
+x.qt$casual <- x.qt$casual+1
+x.qt$registered <- x.qt$registered+1
+x.qt$mnth2 <- x.qt$mnth^2
+x.qt$hr2 <- x.qt$hr^2
+x.qt$weekday2 <- x.qt$weekday^2
+x.qt$weathersit2 <- x.qt$weathersit^2
+x.qt$temp2 <- x.qt$temp^2
+x.qt$hum2 <- x.qt$hum^2
+x.qt$windspeed2 <- x.qt$windspeed^2
 x.qt$registered <-(x.qt$registered^lambda.qrt-1)/lambda.qrt
 y.qt <- x.qt$registered
 X.qt <- subset(x.qt, select = - c(casual,registered))
