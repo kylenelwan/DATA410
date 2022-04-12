@@ -1,0 +1,1 @@
+This folder consist of the compilded R markdowns and the final report of our project. The final report showcases our method we use in analyzing the data, the result of the analysis and the final conclusion regarding what we found.
